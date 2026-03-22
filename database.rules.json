@@ -1,0 +1,27 @@
+{
+  "rules": {
+    "teams": {
+      "$teamCode": {
+        "members": {
+          ".read": "auth != null",
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid",
+            ".validate": "newData.hasChildren(['name', 'zone', 'status', 'lastUpdate'])"
+          }
+        },
+        "schedule": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        },
+        "notifications": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        }
+      }
+    },
+    "booths": {
+      ".read": true,
+      ".write": false
+    }
+  }
+}
