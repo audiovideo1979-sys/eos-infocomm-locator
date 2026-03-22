@@ -5,30 +5,33 @@ import useLocationStore from '../../store/useLocationStore';
 import { ZONES } from '../../data/zones';
 
 const HALL_CONFIG = {
-  central: { label: 'Central Hall', tileDir: '/tiles/central-hall' },
-  north:   { label: 'North Hall',   tileDir: '/tiles/north-hall' },
+  central: {
+    label: 'Central Hall',
+    tileDir: '/tiles/central-hall',
+    externalUrl: 'https://infocomm26.mapyourshow.com/8_0/floorplan/?hallID=C&level=1',
+  },
+  north: {
+    label: 'North Hall',
+    tileDir: '/tiles/north-hall',
+    externalUrl: 'https://infocomm26.mapyourshow.com/8_0/floorplan/?hallID=E&level=1',
+  },
 };
 
-// Image dimensions at max zoom (z=5): 32×32 tiles of 256px = 8192×8192
-// Source cropped images are ~9700×4400 (north) / ~9800×4700 (central).
-// Scaled to fit 8192×8192: scale = min(8192/9750, 8192/4550) ≈ 0.8402
-// scaled_w ≈ 8192, scaled_h ≈ 3823 → offset_y ≈ (8192 - 3823) / 2 ≈ 2185
+// Tile space at z5: 32×32 tiles = 8192×8192px
+// Source images ~9750×4550, scaled to fit → scale ≈ 0.84
+// Content centered vertically within 8192×8192
 const IMG_W = 8192;
 const IMG_H = 8192;
 const CONTENT_Y_OFFSET = 2185;
 const CONTENT_H = 3823;
+const DIV = 32; // 2^maxZoom
 
-// Zone centers as fractions of the original 7590×4080 image
-// (reusing the zone coordinates from zones.js which are in 1265×680 space)
-// Scale: 1265 → 7590 = 6x, 680 → 4080 = 6x
 function zoneToLatLng(zone) {
-  // Zone coords are in 1265×680 space. Map to 4096×4096 tile space.
   const scaleX = IMG_W / 1265;
   const scaleY = CONTENT_H / 680;
   const px = (zone.x + zone.w / 2) * scaleX;
   const py = CONTENT_Y_OFFSET + (zone.y + zone.h / 2) * scaleY;
-  // Leaflet CRS.Simple: lat = -y, lng = x (in pixels)
-  return [-py / 32, px / 32]; // divide by 2^5 to get zoom-0 coords
+  return [-py / DIV, px / DIV];
 }
 
 function hallOfZone(zoneId) {
@@ -69,11 +72,9 @@ export default function MapView() {
     return counts;
   }, [hallMembers]);
 
-  // Initialize / reinitialize Leaflet map when hall changes
+  // Initialize Leaflet map
   useEffect(() => {
     if (!mapRef.current) return;
-
-    // Destroy previous map
     if (mapInstanceRef.current) {
       mapInstanceRef.current.remove();
       mapInstanceRef.current = null;
@@ -89,28 +90,25 @@ export default function MapView() {
       attributionControl: false,
     });
 
-    // Tile layer — our custom tiles: /tiles/{hall}/{z}/{x}_{y}.jpg
     L.tileLayer(`${config.tileDir}/{z}/{x}_{y}.jpg`, {
       minZoom: 0,
       maxZoom: 5,
       tileSize: 256,
       noWrap: true,
-      bounds: [[-IMG_H / 32, 0], [0, IMG_W / 32]],
+      bounds: [[-IMG_H / DIV, 0], [0, IMG_W / DIV]],
     }).addTo(map);
 
-    // Set initial view to show the full content area
-    const southWest = [-(CONTENT_Y_OFFSET + CONTENT_H) / 32, 0];
-    const northEast = [-CONTENT_Y_OFFSET / 32, IMG_W / 32];
+    const southWest = [-(CONTENT_Y_OFFSET + CONTENT_H) / DIV, 0];
+    const northEast = [-CONTENT_Y_OFFSET / DIV, IMG_W / DIV];
     map.fitBounds([southWest, northEast]);
 
-    // Add zone overlays
+    // Zone overlays
     for (const zone of hallZones) {
-      const [lat, lng] = zoneToLatLng(zone);
-      const scaleX = IMG_W / 1265 / 32;
-      const scaleY = CONTENT_H / 680 / 32;
+      const scaleX = IMG_W / 1265 / DIV;
+      const scaleY = CONTENT_H / 680 / DIV;
       const bounds = [
-        [-(CONTENT_Y_OFFSET / 32 + (zone.y + zone.h) * scaleY), zone.x * scaleX],
-        [-(CONTENT_Y_OFFSET / 32 + zone.y * scaleY), (zone.x + zone.w) * scaleX],
+        [-(CONTENT_Y_OFFSET / DIV + (zone.y + zone.h) * scaleY), zone.x * scaleX],
+        [-(CONTENT_Y_OFFSET / DIV + zone.y * scaleY), (zone.x + zone.w) * scaleX],
       ];
       const rect = L.rectangle(bounds, {
         color: 'rgba(78,205,196,0.4)',
@@ -127,37 +125,27 @@ export default function MapView() {
       });
 
       rect.on('click', () => {
-        if (showCheckin) {
-          checkInToZone(zone.id);
-        } else {
-          setFilterZone(filterZone === zone.id ? null : zone.id);
-        }
+        if (showCheckin) checkInToZone(zone.id);
+        else setFilterZone(filterZone === zone.id ? null : zone.id);
       });
     }
 
     mapInstanceRef.current = map;
-
-    return () => {
-      map.remove();
-      mapInstanceRef.current = null;
-    };
+    return () => { map.remove(); mapInstanceRef.current = null; };
   }, [effectiveHall]);
 
-  // Update member markers when members change
+  // Member markers
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    // Clear old markers
     markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
 
-    // Add member markers
     for (const member of hallMembers) {
       const zone = ZONES.find((z) => z.id === member.zone);
       if (!zone) continue;
 
-      // Spread members within a zone
       const sameZone = hallMembers.filter((m) => m.zone === member.zone);
       const idx = sameZone.indexOf(member);
       const count = sameZone.length;
@@ -179,7 +167,6 @@ export default function MapView() {
         fillOpacity: 0.95,
       }).addTo(map);
 
-      // Avatar label
       marker.bindTooltip(member.avatar, {
         permanent: true,
         direction: 'center',
@@ -200,17 +187,14 @@ export default function MapView() {
   };
 
   const handleZoneClick = (zoneId) => {
-    if (showCheckin) {
-      checkInToZone(zoneId);
-    } else {
-      setFilterZone(filterZone === zoneId ? null : zoneId);
-    }
+    if (showCheckin) checkInToZone(zoneId);
+    else setFilterZone(filterZone === zoneId ? null : zoneId);
   };
 
   return (
     <div className="flex-1 overflow-hidden flex flex-col">
-      {/* Hall selector tabs */}
-      <div className="flex shrink-0 border-b border-border px-3 pt-2">
+      {/* Hall tabs + full-detail link */}
+      <div className="flex shrink-0 border-b border-border px-3 pt-2 items-end">
         {Object.entries(HALL_CONFIG).map(([id, cfg]) => (
           <button
             key={id}
@@ -222,12 +206,20 @@ export default function MapView() {
                 : 'border-transparent text-text-dim hover:text-text-muted'}`}
           >{cfg.label.toUpperCase()}</button>
         ))}
+        <a
+          href={HALL_CONFIG[effectiveHall].externalUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ml-auto px-2 py-1 text-[10px] font-mono text-text-dim
+            border border-border-light rounded hover:text-teal hover:border-teal
+            transition-colors mb-1"
+        >HD MAP {'\u2197'}</a>
       </div>
 
       {/* Leaflet map */}
       <div ref={mapRef} className="flex-1" style={{ background: '#f5f5f5' }} />
 
-      {/* Zone quick-nav bar */}
+      {/* Zone bar */}
       <div className="shrink-0 border-t border-border px-3 py-2 flex gap-1.5 flex-wrap items-center">
         <span className="text-[10px] text-text-dim font-mono mr-1">ZONES:</span>
         {hallZones.map((zone) => {
