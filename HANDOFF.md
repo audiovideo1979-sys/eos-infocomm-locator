@@ -1,37 +1,42 @@
 # EOS InfoComm Locator — Handoff
 
 ## Last Session: 2026-03-22
-- **Machine:** Laptop
-- **Summary:** Project initialized — React + Vite + Firebase PWA scaffolded. Core architecture in place: map view, roster, search, schedule, Zustand store, Firebase sync, geolocation, notifications.
+- **Machine:** PC
+- **Summary:** Attempted map improvements — captured real floor plan images via Playwright, replaced 60 exhibitors with 770 from official Excel export, tried multiple map approaches (SVG backgrounds, Leaflet tiles, iframe proxy). None delivered satisfactory results. Project shelved.
 
 ## Last Version
-@1 — Initial project scaffold
+@5 — Leaflet tile map (shelved)
 
-## Files Modified
-- Initial commit — all files
+## Files Modified (This Session)
+- `src/data/booths.js` — 770 exhibitors from official Excel export
+- `src/components/search/SearchPanel.jsx` — guard against missing category
+- `src/components/map/MapView.jsx` — multiple rewrites (SVG → Leaflet tiles → iframe → back to Leaflet)
+- `src/data/halls.js` — image path fields added
+- `src/data/zones.js` — coordinates updated for single-hall viewBox
+- `src/components/map/HallLayer.jsx` — SVG image background
+- `src/components/map/ZoneLayer.jsx` — hall filtering
+- `public/infocomm-*.png` — real floor plan captures (light + dark, both halls)
+- `public/tiles/` — sliced tile pyramids for Leaflet
+- `vite.config.js` — proxy config added/removed
+- `package.json` — added leaflet dependency
 
 ## Current State
-- Project scaffolded with full component structure
-- Firebase config and auth in place
-- Hall maps (Central + North, light/dark) added to public/
-- PWA manifest and icons in place
-- Core hooks: useFirebaseSync, useGeolocation, useNotifications
-- Data files: booths, halls, zones, schedule, pois, colors
+- Project shelved — pushed to GitHub as WIP
+- Core app works (roster, search, schedule, Firebase sync)
+- Map is functional but unsatisfying — raster tiles too blurry at deep zoom
+- 770 exhibitors loaded from official InfoComm 2026 data
 
-## Pending / Next Tasks
-- [ ] Flesh out actual booth/exhibitor data in `src/data/booths.js`
-- [ ] Implement map pin rendering in MapView
-- [ ] Wire up Firebase RTDB for live location sharing
-- [ ] Test PWA install flow on iOS and Android
-- [ ] Set up Firebase Hosting and deploy
+## Pending (If Ever Resumed)
+- [ ] Simplify map to clean zone diagram (no floor plan image)
+- [ ] Or find vector tile source for crisp zoom
+- [ ] Firebase Hosting deploy
+- [ ] PWA install testing on mobile
 
-## Known Issues / Notes
-- README.md is still the default Vite template — needs updating
-- Firebase project credentials should be in env vars, not hardcoded
+## Known Issues
+- Leaflet tile map blurry at deep zoom (raster limitation)
+- iframe proxy approach failed (MapYourShow sub-resources won't proxy)
+- Categories array empty (Excel export had no category column)
 
 ## Key Decisions
-- PWA so team can install on phones without app store
-- Firebase RTDB for real-time location updates (low latency)
-- Zustand for lightweight client state
-- Tailwind CSS 4 (Vite plugin variant)
-- Hall maps as static images in public/ (Central Hall + North Hall)
+- Shelved — map quality not meeting expectations
+- Real floor plan approach abandoned in favor of potential simple zone diagram
