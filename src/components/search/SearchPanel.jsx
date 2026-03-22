@@ -19,7 +19,7 @@ export default function SearchPanel() {
       filtered = filtered.filter((b) =>
         b.name.toLowerCase().includes(q) ||
         b.booth.toLowerCase().includes(q) ||
-        b.category.toLowerCase().includes(q)
+        (b.category || '').toLowerCase().includes(q)
       );
     }
     return filtered;
