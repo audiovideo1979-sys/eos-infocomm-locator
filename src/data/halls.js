@@ -1,4 +1,14 @@
 export const HALLS = [
-  { id: "north", label: "North Hall", x: 50, y: 40, w: 380, h: 280 },
-  { id: "central", label: "Central Hall", x: 460, y: 40, w: 380, h: 280 },
+  {
+    id: 'central',
+    label: 'Central Hall',
+    image: '/infocomm-central-hall-dark.png',
+    imageLight: '/infocomm-central-hall.png',
+  },
+  {
+    id: 'north',
+    label: 'North Hall',
+    image: '/infocomm-north-hall-dark.png',
+    imageLight: '/infocomm-north-hall.png',
+  },
 ];

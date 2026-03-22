@@ -1,6 +1,14 @@
 EOS InfoComm Locator — Changelog
 =================================
 
+@4 — 2026-03-22
+  Map refactor: real floor plan images as SVG backgrounds
+  Hall selector tabs (Central / North) replace external floor plan links
+  Zone overlays on real images, per-hall coordinate system (1265x680 viewBox)
+  Members filtered by hall, auto-switch hall on zone filter or member select
+  MapView: single-hall view, no more dual-hall SVG rectangles
+  Removed POILayer (stale old-coord data), kept MapDefs for glow filter
+
 @3 — 2026-03-22
   Replace blank floor plan images with real InfoComm 2026 hall screenshots
   Captured via Playwright headless at 2560x1440, cropped to 2530x1360

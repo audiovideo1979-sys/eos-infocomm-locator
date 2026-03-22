@@ -2,7 +2,7 @@ import { ZONES } from '../data/zones';
 
 export function getZoneCenter(zoneId) {
   const z = ZONES.find((z) => z.id === zoneId);
-  if (!z) return { x: 440, y: 180 };
+  if (!z) return { x: 632, y: 340 };
   return { x: z.x + z.w / 2, y: z.y + z.h / 2 };
 }
 
