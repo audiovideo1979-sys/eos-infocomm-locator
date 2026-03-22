@@ -9,16 +9,14 @@ const HALL_CONFIG = {
   north:   { label: 'North Hall',   tileDir: '/tiles/north-hall' },
 };
 
-// Image dimensions at max zoom (z=4): 16×16 tiles of 256px = 4096×4096
-// But actual content is aspect-ratio fit inside that. Source is 7590×4080 → scaled to fit 4096×4096.
-// scale = min(4096/7590, 4096/4080) = min(0.5396, 1.0039) = 0.5396
-// scaled_w = 7590 * 0.5396 = 4096, scaled_h = 4080 * 0.5396 = 2202
-// offset_x = 0, offset_y = (4096 - 2202) / 2 = 947
-// So the actual floor plan content is at y=947..3149 within the 4096×4096 tile space.
-const IMG_W = 4096;
-const IMG_H = 4096;
-const CONTENT_Y_OFFSET = 947;
-const CONTENT_H = 2202;
+// Image dimensions at max zoom (z=5): 32×32 tiles of 256px = 8192×8192
+// Source cropped images are ~9700×4400 (north) / ~9800×4700 (central).
+// Scaled to fit 8192×8192: scale = min(8192/9750, 8192/4550) ≈ 0.8402
+// scaled_w ≈ 8192, scaled_h ≈ 3823 → offset_y ≈ (8192 - 3823) / 2 ≈ 2185
+const IMG_W = 8192;
+const IMG_H = 8192;
+const CONTENT_Y_OFFSET = 2185;
+const CONTENT_H = 3823;
 
 // Zone centers as fractions of the original 7590×4080 image
 // (reusing the zone coordinates from zones.js which are in 1265×680 space)
@@ -30,7 +28,7 @@ function zoneToLatLng(zone) {
   const px = (zone.x + zone.w / 2) * scaleX;
   const py = CONTENT_Y_OFFSET + (zone.y + zone.h / 2) * scaleY;
   // Leaflet CRS.Simple: lat = -y, lng = x (in pixels)
-  return [-py / 16, px / 16]; // divide by 2^4 to get zoom-0 coords
+  return [-py / 32, px / 32]; // divide by 2^5 to get zoom-0 coords
 }
 
 function hallOfZone(zoneId) {
@@ -85,7 +83,7 @@ export default function MapView() {
     const map = L.map(mapRef.current, {
       crs: L.CRS.Simple,
       minZoom: 0,
-      maxZoom: 4,
+      maxZoom: 5,
       zoomSnap: 0.5,
       zoomDelta: 0.5,
       attributionControl: false,
@@ -94,25 +92,25 @@ export default function MapView() {
     // Tile layer — our custom tiles: /tiles/{hall}/{z}/{x}_{y}.jpg
     L.tileLayer(`${config.tileDir}/{z}/{x}_{y}.jpg`, {
       minZoom: 0,
-      maxZoom: 4,
+      maxZoom: 5,
       tileSize: 256,
       noWrap: true,
-      bounds: [[-IMG_H / 16, 0], [0, IMG_W / 16]],
+      bounds: [[-IMG_H / 32, 0], [0, IMG_W / 32]],
     }).addTo(map);
 
     // Set initial view to show the full content area
-    const southWest = [-(CONTENT_Y_OFFSET + CONTENT_H) / 16, 0];
-    const northEast = [-CONTENT_Y_OFFSET / 16, IMG_W / 16];
+    const southWest = [-(CONTENT_Y_OFFSET + CONTENT_H) / 32, 0];
+    const northEast = [-CONTENT_Y_OFFSET / 32, IMG_W / 32];
     map.fitBounds([southWest, northEast]);
 
     // Add zone overlays
     for (const zone of hallZones) {
       const [lat, lng] = zoneToLatLng(zone);
-      const scaleX = IMG_W / 1265 / 16;
-      const scaleY = CONTENT_H / 680 / 16;
+      const scaleX = IMG_W / 1265 / 32;
+      const scaleY = CONTENT_H / 680 / 32;
       const bounds = [
-        [-(CONTENT_Y_OFFSET / 16 + (zone.y + zone.h) * scaleY), zone.x * scaleX],
-        [-(CONTENT_Y_OFFSET / 16 + zone.y * scaleY), (zone.x + zone.w) * scaleX],
+        [-(CONTENT_Y_OFFSET / 32 + (zone.y + zone.h) * scaleY), zone.x * scaleX],
+        [-(CONTENT_Y_OFFSET / 32 + zone.y * scaleY), (zone.x + zone.w) * scaleX],
       ];
       const rect = L.rectangle(bounds, {
         color: 'rgba(78,205,196,0.4)',
