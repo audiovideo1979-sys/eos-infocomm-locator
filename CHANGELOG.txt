@@ -1,6 +1,12 @@
 EOS InfoComm Locator — Changelog
 =================================
 
+@3 — 2026-03-22
+  Replace blank floor plan images with real InfoComm 2026 hall screenshots
+  Captured via Playwright headless at 2560x1440, cropped to 2530x1360
+  North Hall + Central Hall, light + dark variants
+  Source: infocomm26.mapyourshow.com
+
 @2 — 2026-03-22
   Replace exhibitor data with full InfoComm 2026 official list (770 exhibitors)
   Source: INFOCOMM26_Exhibitor_List_03-22-2026.xlsx from MapYourShow Excel export
